@@ -27,9 +27,12 @@ public class Goblin : MonoBehaviour
 
     [Header("Componentes")]
     [SerializeField] Rigidbody2D rb;
+    [SerializeField] BoxCollider2D bc;
     [SerializeField] TextMeshProUGUI startText;
     [SerializeField] TextMeshProUGUI gameoverText;
     [SerializeField] TextMeshProUGUI continueText;
+    [SerializeField] Animator animator;
+    [SerializeField] SpriteRenderer spriteRenderer;
 
     private PlayerControls inputActions;
 
@@ -41,7 +44,7 @@ public class Goblin : MonoBehaviour
     private Vector2 dragEnd;
 
 
-    private int direction = 1;
+
 
     void Awake()
     {
@@ -69,6 +72,14 @@ public class Goblin : MonoBehaviour
     {
         if (rb == null)
             rb = GetComponent<Rigidbody2D>();
+        if (bc == null)
+            bc = GetComponent<BoxCollider2D>();
+        bc.enabled = true;
+        
+        if(spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
 
         gameoverText.enabled = false;
         continueText.enabled = false;
@@ -95,6 +106,13 @@ public class Goblin : MonoBehaviour
         {
             dragEnd = GetTouchWorldPosition();
             DrawTrajectory();
+        }
+        
+        if (rb.linearVelocityY < -0.1f)
+        {
+            bool isFalling = !touchingSurface && rb.linearVelocity.y < -0.2f;
+
+            animator.SetBool("isFalling", isFalling);
         }
     }
 
@@ -153,17 +171,13 @@ public class Goblin : MonoBehaviour
             launchVelocity = dragDirection * ((launchPower+2)/2);
         }
 
+        UpdateSprite(launchVelocity.x);
+
         rb.linearVelocity = launchVelocity;
         jumpsRemaining--;
 
-        if (launchVelocity.x > 0.1f)
-            direction = 1;
-        else if (launchVelocity.x < -0.1f)
-            direction = -1;
+        
 
-        UpdateSpriteScale();
-
-        // consome pulo
         
     }
 
@@ -214,26 +228,43 @@ public class Goblin : MonoBehaviour
         return worldPoint;
     }
 
-    void UpdateSpriteScale()
+    void UpdateSprite(float xVelocity)
     {
-        Vector3 scale = transform.localScale;
+        if (xVelocity > 0.1f)
+            spriteRenderer.flipX = false;
+        else if (xVelocity < -0.1f)
+            spriteRenderer.flipX = true;
+    }
 
-        scale.x = Mathf.Abs(scale.x) * direction;
+    void SetFacingDirection(Transform wall)
+    {
+        if (wall == null) return;
 
-        transform.localScale = scale;
+        float dir = wall.position.x - transform.position.x;
+
+        spriteRenderer.flipX = dir < 0f;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
         touchingSurface = true;
 
+        animator.SetBool("isFalling", false);
+
         if (collision.gameObject.CompareTag("Wall"))
+        {
+            SetFacingDirection(collision.transform);
+
+            animator.SetBool("isGrab", true);
+            jumpsRemaining = 2;
+        }
+        if (collision.gameObject.CompareTag("Floor"))
         {
             jumpsRemaining = 2;
         }
 
-
     }
+
 
     private void OnCollisionStay2D(Collision2D collision)
     {
@@ -243,8 +274,12 @@ public class Goblin : MonoBehaviour
 
     private void OnCollisionExit2D(Collision2D collision)
     {
-        touchingSurface = false;
 
+        touchingSurface = false;
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            animator.SetBool("isGrab", false);
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -258,9 +293,20 @@ public class Goblin : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
+
         gameoverText.enabled = true;
         continueText.enabled = true;
+        animator.SetBool("isFalling", false);
+        animator.SetBool("isGrab", false);
+
+        animator.SetTrigger("isDead");
+
+
+        touchingSurface = false;
         isDragging = false;
+        Object.FindFirstObjectByType<Unity.Cinemachine.CinemachineCamera>().Follow = null;
+        bc.enabled = false;
+
         lineRenderer.enabled = false;
 
         inputActions.Disable();

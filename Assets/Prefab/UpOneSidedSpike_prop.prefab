@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9185993647921173474}
   - component: {fileID: 1845886016741732265}
   - component: {fileID: 1568047951754947029}
+  - component: {fileID: 312241004361464104}
   m_Layer: 0
   m_Name: UpOneSidedSpike_prop
   m_TagString: Lava
@@ -138,3 +139,17 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.6444042, y: 1.8551235}
   m_EdgeRadius: 0
+--- !u!114 &312241004361464104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8127176341960680491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a063a2e3a344c4f478ad37cfd4278b00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DestroyProps
+  player: {fileID: 0}
+  destroyDistance: 25

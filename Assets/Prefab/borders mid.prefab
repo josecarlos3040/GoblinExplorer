@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1897292085327407642}
   - component: {fileID: 5323153957392766449}
   - component: {fileID: 1530676087637883917}
+  - component: {fileID: 7860049991599845541}
   m_Layer: 0
   m_Name: borders mid
   m_TagString: Wall
@@ -29,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 12.29156, z: 0}
-  m_LocalScale: {x: 0.9505, y: 0.9505, z: 0.8160803}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -185,3 +186,17 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.4923649, y: 20}
   m_EdgeRadius: 0
+--- !u!114 &7860049991599845541
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8371869548549018307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a063a2e3a344c4f478ad37cfd4278b00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DestroyProps
+  player: {fileID: 0}
+  destroyDistance: 25
