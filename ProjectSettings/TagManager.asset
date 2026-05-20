@@ -7,6 +7,8 @@ TagManager:
   - Limite
   - Floor
   - Wall
+  - Lava
+  - Coin
   layers:
   - Default
   - TransparentFX
@@ -43,6 +45,15 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: back
+    uniqueID: 3850504575
+    locked: 0
+  - name: mid
+    uniqueID: 3513775479
+    locked: 0
+  - name: fore
+    uniqueID: 2142807007
     locked: 0
   m_RenderingLayers:
   - Default

@@ -1,45 +1,51 @@
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class Goblin : MonoBehaviour
 {
+    public static Goblin instance;
+
+    public bool gameStarted = false;
+
     [Header("Pulo")]
-    [SerializeField] int maxJumps = 2;
+    [SerializeField] float launchPower = 8f;
+    [SerializeField] int jumpsRemaining;
+
+    [Header("Estilingue")]
+    [SerializeField] float maxDragDistance = 4f;
 
     [Header("Wall Slide")]
     [SerializeField] float wallSlideSpeed = 1.5f;
 
-    [Header("Slingshot (Angry Birds)")]
-    [SerializeField] float launchPower = 8f;
-    [SerializeField] float maxDragDistance = 4f;
-
-    [Header("Pontilhado")]
+    [Header("Trajetória")]
     [SerializeField] LineRenderer lineRenderer;
     [SerializeField] int linePoints = 30;
     [SerializeField] float timeBetweenPoints = 0.05f;
 
     [Header("Componentes")]
     [SerializeField] Rigidbody2D rb;
+    [SerializeField] TextMeshProUGUI startText;
+    [SerializeField] TextMeshProUGUI gameoverText;
+    [SerializeField] TextMeshProUGUI continueText;
 
     private PlayerControls inputActions;
 
-    // Estados
     private bool touchingSurface;
     private bool isDragging;
-    private bool isWallSliding;
+    private bool isDead = false;
 
-    // Pulos restantes
-    private int jumpsRemaining;
-
-    // Drag
     private Vector2 dragStart;
     private Vector2 dragEnd;
 
-    // Dire��o visual do sprite
+
     private int direction = 1;
 
     void Awake()
     {
+        instance = this;
         inputActions = new PlayerControls();
     }
 
@@ -64,238 +70,214 @@ public class Goblin : MonoBehaviour
         if (rb == null)
             rb = GetComponent<Rigidbody2D>();
 
-        jumpsRemaining = maxJumps;
+        gameoverText.enabled = false;
+        continueText.enabled = false;
+        startText.enabled = true;
+
+        jumpsRemaining = 2;
 
         lineRenderer.enabled = false;
     }
 
     void Update()
     {
-        // Atualiza trajet�ria enquanto arrasta
+        if (isDead)
+        {
+            if ((Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
+                (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame))
+            {
+                RestartGame();
+            }
+            return;
+        }
+
         if (isDragging)
         {
             dragEnd = GetTouchWorldPosition();
-
             DrawTrajectory();
         }
     }
 
     void FixedUpdate()
     {
-        // Wall slide apenas se:
-        // - estiver encostando
-        // - estiver caindo
         if (touchingSurface && rb.linearVelocity.y < 0)
         {
-            isWallSliding = true;
-
             rb.linearVelocity = new Vector2(
                 rb.linearVelocity.x,
-                Mathf.Max(
-                    rb.linearVelocity.y,
-                    -wallSlideSpeed
-                )
+                Mathf.Max(rb.linearVelocity.y, -wallSlideSpeed)
             );
         }
-        else
-        {
-            isWallSliding = false;
-        }
     }
 
-    // COME�OU O TOQUE
+    // START = começa drag sempre
     void StartInput(InputAction.CallbackContext context)
     {
-        // Estilingue dispon�vel em qualquer superf�cie
-        if (touchingSurface)
-        {
-            isDragging = true;
+        if (isDead) return;
+        if (jumpsRemaining <= 0)
+            return;
 
-            dragStart = GetTouchWorldPosition();
+        isDragging = true;
+        startText.enabled = false;
+        gameStarted = true;
 
-            lineRenderer.enabled = true;
-        }
-        else
-        {
-            // Double Jump no ar
-            AirJump();
-        }
+        dragStart = GetTouchWorldPosition();
+
+        lineRenderer.enabled = true;
     }
 
-    // SOLTOU O TOQUE
     void ReleaseInput(InputAction.CallbackContext context)
     {
-        if (!isDragging)
-            return;
+        if (!isDragging) return;
 
         isDragging = false;
 
         lineRenderer.enabled = false;
-
         Launch();
+        
     }
 
-    // DOUBLE JUMP
-    void AirJump()
-    {
-        if (jumpsRemaining > 0)
-        {
-            jumpsRemaining--;
-
-            // Preserve a velocidade horizontal � n�o zere o rb.velocity.
-            // Apenas aplique o impulso para subir.
-            rb.AddForce(
-                Vector2.up * launchPower,
-                ForceMode2D.Impulse
-            );
-        }
-    }
-
-    // ESTILINGUE
     void Launch()
     {
+
         touchingSurface = false;
-        isWallSliding = false;
 
-        // Dire��o do arrasto
-        Vector2 dragDirection =
-            dragStart - dragEnd;
+        Vector2 dragDirection = dragStart - dragEnd;
 
-        // Limite do pux�o
-        dragDirection =
-            Vector2.ClampMagnitude(
-                dragDirection,
-                maxDragDistance
-            );
+        dragDirection = Vector2.ClampMagnitude(dragDirection, maxDragDistance);
 
-        // Velocidade estilo Angry Birds
-        Vector2 launchVelocity =
-            dragDirection * launchPower;
+
+        Vector2 launchVelocity = dragDirection * launchPower;
+        
+        if(jumpsRemaining < 2)
+        {
+            launchVelocity = dragDirection * ((launchPower+2)/2);
+        }
 
         rb.linearVelocity = launchVelocity;
+        jumpsRemaining--;
 
-        // Atualiza dire��o visual
         if (launchVelocity.x > 0.1f)
-        {
             direction = 1;
-        }
         else if (launchVelocity.x < -0.1f)
-        {
             direction = -1;
-        }
 
         UpdateSpriteScale();
 
-        // Consome um pulo
-        jumpsRemaining = maxJumps - 1;
+        // consome pulo
+        
     }
 
-    // TRAJET�RIA
     void DrawTrajectory()
     {
-        Vector2 dragDirection =
-            dragStart - dragEnd;
+        Vector2 dragDirection = dragStart - dragEnd;
 
-        dragDirection =
-            Vector2.ClampMagnitude(
-                dragDirection,
-                maxDragDistance
-            );
+        dragDirection = Vector2.ClampMagnitude(dragDirection, maxDragDistance);
 
-        Vector2 initialVelocity =
-            dragDirection * launchPower;
+        Vector2 initialVelocity = dragDirection * launchPower;
+        
+        
+        if(jumpsRemaining < 2)
+        {
+            initialVelocity = dragDirection * ((launchPower + 2) / 2);
+        }
 
-        Vector2 gravity =
-            Physics2D.gravity * rb.gravityScale;
+        Vector2 gravity = Physics2D.gravity * rb.gravityScale;
 
-        lineRenderer.positionCount =
-            linePoints;
+        lineRenderer.positionCount = linePoints;
 
         for (int i = 0; i < linePoints; i++)
         {
-            float time =
-                i * timeBetweenPoints;
+            float time = i * timeBetweenPoints;
 
             Vector2 point =
                 (Vector2)transform.position +
                 (initialVelocity * time) +
                 (0.5f * gravity * time * time);
 
-            lineRenderer.SetPosition(
-                i,
-                point
-            );
+            lineRenderer.SetPosition(i, point);
         }
     }
 
-    // POSI��O DO TOQUE
     Vector2 GetTouchWorldPosition()
     {
-        Vector2 screenPosition =
-            Vector2.zero;
+        Vector2 screenPosition = Vector2.zero;
 
-        // Mobile
         if (Touchscreen.current != null)
-        {
-            screenPosition =
-                Touchscreen.current
-                .primaryTouch
-                .position
-                .ReadValue();
-        }
-        // PC
+            screenPosition = Touchscreen.current.primaryTouch.position.ReadValue();
         else if (Mouse.current != null)
-        {
-            screenPosition =
-                Mouse.current
-                .position
-                .ReadValue();
-        }
+            screenPosition = Mouse.current.position.ReadValue();
 
-        if (Camera.main != null)
-        {
-            Vector3 worldPoint =
-                Camera.main.ScreenToWorldPoint(
-                    new Vector3(
-                        screenPosition.x,
-                        screenPosition.y,
-                        Camera.main.nearClipPlane
-                    )
-                );
+        Vector3 worldPoint = Camera.main.ScreenToWorldPoint(
+            new Vector3(screenPosition.x, screenPosition.y, Camera.main.nearClipPlane)
+        );
 
-            return worldPoint;
-        }
-
-        return Vector2.zero;
+        return worldPoint;
     }
 
-    // DETECTA SUPERF�CIES
+    void UpdateSpriteScale()
+    {
+        Vector3 scale = transform.localScale;
+
+        scale.x = Mathf.Abs(scale.x) * direction;
+
+        transform.localScale = scale;
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         touchingSurface = true;
 
-        jumpsRemaining = maxJumps;
+        if (collision.gameObject.CompareTag("Wall"))
+        {
+            jumpsRemaining = 2;
+        }
+
+
     }
 
     private void OnCollisionStay2D(Collision2D collision)
     {
         touchingSurface = true;
+
     }
 
     private void OnCollisionExit2D(Collision2D collision)
     {
         touchingSurface = false;
+
     }
 
-    // VIRA O SPRITE
-    void UpdateSpriteScale()
+    private void OnTriggerEnter2D(Collider2D other)
     {
-        Vector3 scale =
-            transform.localScale;
+        if (other.CompareTag("Lava"))
+            Die();
+    }
 
-        scale.x =
-            Mathf.Abs(scale.x) * direction;
+    void Die()
+    {
+        if (isDead) return;
 
-        transform.localScale = scale;
+        isDead = true;
+        gameoverText.enabled = true;
+        continueText.enabled = true;
+        isDragging = false;
+        lineRenderer.enabled = false;
+
+        inputActions.Disable();
+
+        rb.linearVelocity = Vector2.zero;
+
+        rb.AddForce(Vector2.up * 10f, ForceMode2D.Impulse);
+
+        rb.angularVelocity = 400f;
+        
+    }
+
+    void RestartGame()
+    {
+        gameoverText.enabled = false;
+        continueText.enabled = false;
+        startText.enabled = true;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
