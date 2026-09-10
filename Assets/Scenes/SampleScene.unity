@@ -1649,14 +1649,14 @@ MonoBehaviour:
   dangerLayers:
     serializedVersion: 2
     m_Bits: 64
-  textReviveCoin: {fileID: 0}
+  textReviveCoin: {fileID: 2136391680}
   coinCostForRevive: 50
   rb: {fileID: 0}
   bc: {fileID: 0}
   startText: {fileID: 1776295096}
   gameoverPanel: {fileID: 958763909}
   gameoverText: {fileID: 1535252404}
-  continueText: {fileID: 0}
+  continueText: {fileID: 1378518324}
   animator: {fileID: 1232331966}
   spriteRenderer: {fileID: 0}
 --- !u!120 &1232331964
@@ -3381,8 +3381,8 @@ MonoBehaviour:
   wallPrefab: {fileID: 4778492944778273286, guid: 3de3e9a341a6ee74c8e88ed878de5033, type: 3}
   spawnDistanceAboveCamera: 17
   spawnIntervalY: 24
-  xMin: -4
-  xMax: 4
+  xMin: -3
+  xMax: 3
 --- !u!4 &1991766691
 Transform:
   m_ObjectHideFlags: 0
