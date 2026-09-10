@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1804634507616830459}
   - component: {fileID: 6414272108696976962}
   - component: {fileID: 3732504056493715552}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: DobbleSidedSpikes_prop
   m_TagString: Lava
   m_Icon: {fileID: 0}

@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1845886016741732265}
   - component: {fileID: 1568047951754947029}
   - component: {fileID: 312241004361464104}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: UpOneSidedSpike_prop
   m_TagString: Lava
   m_Icon: {fileID: 0}

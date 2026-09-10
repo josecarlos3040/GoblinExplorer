@@ -12,7 +12,7 @@ public class GameUI : MonoBehaviour
     [Header("Player")]
     [SerializeField] private Transform player;
 
-    private int coins = 0;
+    public static int coins = 0;
     private float startY;
 
     void Awake()

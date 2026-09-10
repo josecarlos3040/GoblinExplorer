@@ -9,6 +9,7 @@ TagManager:
   - Wall
   - Lava
   - Coin
+  - Wall2
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - 
   - Water
   - UI
-  - 
+  - Danger
   - 
   - 
   - 
@@ -57,3 +58,4 @@ TagManager:
     locked: 0
   m_RenderingLayers:
   - Default
+  m_MigratedRenderPipelines: []

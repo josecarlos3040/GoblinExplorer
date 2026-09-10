@@ -19,4 +19,15 @@ public class Lava : MonoBehaviour
 
         transform.position += Vector3.up * speed * Time.deltaTime;
     }
+
+    public void ResetForRevive(float playerY)
+    {
+        transform.position = new Vector3(
+            transform.position.x,
+            playerY - 50f,
+            transform.position.z
+        );
+
+        Debug.Log("Lava resetada para Y: " + transform.position.y);
+    }
 }
