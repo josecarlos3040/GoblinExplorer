@@ -43,7 +43,7 @@ public class GameUI : MonoBehaviour
         UpdateCoinsUI();
     }
 
-    void UpdateCoinsUI()
+    public void UpdateCoinsUI()
     {
         coinsText.text = " " + coins;
     }

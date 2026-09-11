@@ -434,7 +434,8 @@ public class Goblin : MonoBehaviour
     {
         if (GameUI.coins >= coinCostForRevive)
         {
-            GameUI.coins -= coinCostForRevive;
+            GameUI.coins = GameUI.coins - coinCostForRevive;
+            GameUI.instance.UpdateCoinsUI();
 
             Revive();
 
