@@ -8,6 +8,8 @@ public class Coin : MonoBehaviour
     [SerializeField] private LayerMask wallMask;
     [SerializeField] private float checkRadius = 0.3f;
 
+    [SerializeField] GameObject particula;
+
     private void Start()
     {
         if (player == null)
@@ -42,5 +44,10 @@ public class Coin : MonoBehaviour
             GameUI.instance.AddCoin(5);
             Destroy(gameObject);
         }
+    }
+
+    private void OnDestroy()
+    {
+        Instantiate(particula, transform.position, transform.rotation);
     }
 }

@@ -148,6 +148,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 16
   checkRadius: 0.4
+  particula: {fileID: 7910747443108014405, guid: 7be092af0f079a44985ed8b013d305e1, type: 3}
 --- !u!95 &4555531456231341377
 Animator:
   serializedVersion: 7

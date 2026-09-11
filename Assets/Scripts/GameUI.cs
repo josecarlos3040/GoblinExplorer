@@ -45,12 +45,12 @@ public class GameUI : MonoBehaviour
 
     void UpdateCoinsUI()
     {
-        coinsText.text = "Coins: " + coins;
+        coinsText.text = " " + coins;
     }
 
     void UpdateDistanceUI()
     {
         float distance = Mathf.Max(0, player.position.y - startY);
-        distanceText.text = "Distance: " + Mathf.FloorToInt(distance) + "m";
+        distanceText.text = Mathf.FloorToInt(distance) + "m";
     }
 }

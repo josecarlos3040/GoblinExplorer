@@ -440,7 +440,7 @@ public class Goblin : MonoBehaviour
 
             coinCostForRevive *= 2;
 
-            textReviveCoin.text = "Revive for " + coinCostForRevive + " coins";
+            textReviveCoin.text = coinCostForRevive + " coins";
         }
     }
 
