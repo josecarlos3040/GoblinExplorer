@@ -33,6 +33,7 @@ public class Goblin : MonoBehaviour
 
     private Vector2 lastSafeWallPosition;
     private bool hasSafeWallPosition = false;
+    private Pointer activePointer;
 
     [SerializeField] private TextMeshProUGUI textReviveCoin;
     [SerializeField] public int coinCostForRevive = 50;
@@ -44,7 +45,9 @@ public class Goblin : MonoBehaviour
     [SerializeField] GameObject gameoverPanel;
     [SerializeField] TextMeshProUGUI gameoverText;
 
-    
+    [SerializeField] private GoblinSaveSystem saveSystem;
+
+
     [SerializeField] TextMeshProUGUI continueText;
     [SerializeField] Animator animator;
     [SerializeField] SpriteRenderer spriteRenderer;
@@ -148,8 +151,12 @@ public class Goblin : MonoBehaviour
     // START = começa drag sempre
     void StartInput(InputAction.CallbackContext context)
     {
-        if (isDead) return;
-        if (jumpsRemaining <= 0)
+        if (isDead || jumpsRemaining <= 0)
+            return;
+
+        activePointer = context.control.device as Pointer;
+
+        if (activePointer == null)
             return;
 
         isDragging = true;
@@ -157,19 +164,32 @@ public class Goblin : MonoBehaviour
         gameStarted = true;
 
         dragStart = GetTouchWorldPosition();
+        dragEnd = dragStart;
 
         lineRenderer.enabled = true;
+
+        Debug.Log("Dispositivo: " + activePointer.displayName);
     }
 
     void ReleaseInput(InputAction.CallbackContext context)
     {
-        if (!isDragging) return;
+        if (!isDragging)
+            return;
+
+        // Atualiza a posição antes de lançar
+        dragEnd = GetTouchWorldPosition();
+
+        Debug.Log(
+            "Distância do drag: " +
+            Vector2.Distance(dragStart, dragEnd)
+        );
 
         isDragging = false;
-
         lineRenderer.enabled = false;
+
         Launch();
-        
+
+        activePointer = null;
     }
 
     void Launch()
@@ -232,18 +252,31 @@ public class Goblin : MonoBehaviour
 
     Vector2 GetTouchWorldPosition()
     {
-        Vector2 screenPosition = Vector2.zero;
+        if (activePointer == null)
+            return transform.position;
 
-        if (Touchscreen.current != null)
-            screenPosition = Touchscreen.current.primaryTouch.position.ReadValue();
-        else if (Mouse.current != null)
-            screenPosition = Mouse.current.position.ReadValue();
+        Vector2 screenPosition =
+            activePointer.position.ReadValue();
 
-        Vector3 worldPoint = Camera.main.ScreenToWorldPoint(
-            new Vector3(screenPosition.x, screenPosition.y, Camera.main.nearClipPlane)
+        Camera cam = Camera.main;
+
+        float cameraDistance = Mathf.Abs(
+            cam.transform.position.z -
+            transform.position.z
         );
 
-        return worldPoint;
+        Vector3 worldPosition = cam.ScreenToWorldPoint(
+            new Vector3(
+                screenPosition.x,
+                screenPosition.y,
+                cameraDistance
+            )
+        );
+
+        return new Vector2(
+            worldPosition.x,
+            worldPosition.y
+        );
     }
 
     void UpdateSprite(float xVelocity)
@@ -450,6 +483,7 @@ public class Goblin : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
+
         gameoverPanel.SetActive(true);
         gameoverText.enabled = true;
         continueText.enabled = true;
@@ -457,7 +491,6 @@ public class Goblin : MonoBehaviour
         animator.SetBool("isGrab", false);
 
         animator.SetTrigger("isDead");
-
 
         touchingSurface = false;
         isDragging = false;
@@ -468,19 +501,26 @@ public class Goblin : MonoBehaviour
 
         inputActions.Disable();
 
+
         rb.linearVelocity = Vector2.zero;
 
         rb.AddForce(Vector2.up * 10f, ForceMode2D.Impulse);
 
-        rb.angularVelocity = 400f;   
+        rb.angularVelocity = 400f;
+        saveSystem.SaveGameResult(GameUI.distanceGoblin);
+
     }
 
     public void RestartGame()
     {
+   
         gameoverPanel.SetActive(false);
         gameoverText.enabled = false;
         continueText.enabled = false;
         startText.enabled = true;
+
+        saveSystem.UpdateUI();
+
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

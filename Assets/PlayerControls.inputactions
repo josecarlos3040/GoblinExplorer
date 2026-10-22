@@ -20,7 +20,7 @@
                 {
                     "name": "",
                     "id": "0096a7ed-08d4-4480-a368-05e4801d13ff",
-                    "path": "<Touchscreen>/Press",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -30,8 +30,8 @@
                 },
                 {
                     "name": "",
-                    "id": "8c4b2605-efac-49dc-9198-d40b89089217",
-                    "path": "<Mouse>/rightButton",
+                    "id": "aa16973b-e395-4f40-bd61-7125a9046111",
+                    "path": "<Touchscreen>/primaryTouch/press",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
