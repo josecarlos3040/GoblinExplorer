@@ -5,6 +5,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
+// Goblin Explorer — codigo do personagem.
+// Para o video: procure as regioes "ESTILINGUE" e "OUTRAS MECANICAS".
+// Os comentarios explicam o que ja estava funcionando; nao alteram a logica.
 public class Goblin : MonoBehaviour
 {
     public static Goblin instance;
@@ -12,16 +15,20 @@ public class Goblin : MonoBehaviour
     public bool gameStarted = false;
 
     [Header("Pulo")]
+    // Quanto maior esse numero, mais forte o primeiro lancamento.
     [SerializeField] float launchPower = 8f;
+    // Quantos pulos ainda temos antes de encostar em outra superficie.
     [SerializeField] int jumpsRemaining;
 
     [Header("Estilingue")]
+    // Limite para o jogador nao puxar o "estilingue" infinitamente.
     [SerializeField] float maxDragDistance = 4f;
 
     [Header("Wall Slide")]
     [SerializeField] float wallSlideSpeed = 1.5f;
 
     [Header("Trajetória")]
+    // Desenha a linha pontilhada/curva que indica para onde vamos.
     [SerializeField] LineRenderer lineRenderer;
     [SerializeField] int linePoints = 30;
     [SerializeField] float timeBetweenPoints = 0.05f;
@@ -39,6 +46,7 @@ public class Goblin : MonoBehaviour
     [SerializeField] public int coinCostForRevive = 50;
 
     [Header("Componentes")]
+    // O Rigidbody2D e a parte que recebe a velocidade e reage a gravidade.
     [SerializeField] Rigidbody2D rb;
     [SerializeField] BoxCollider2D bc;
     [SerializeField] TextMeshProUGUI startText;
@@ -52,12 +60,15 @@ public class Goblin : MonoBehaviour
     [SerializeField] Animator animator;
     [SerializeField] SpriteRenderer spriteRenderer;
 
+    // Reconhece os controles configurados no Input System da Unity.
     private PlayerControls inputActions;
 
     private bool touchingSurface;
     private bool isDragging;
     private bool isDead = false;
 
+    // Vector2 e uma posicao com dois numeros: X e Y.
+    // Guardamos onde o jogador comecou e terminou de arrastar.
     private Vector2 dragStart;
     private Vector2 dragEnd;
 
@@ -70,10 +81,12 @@ public class Goblin : MonoBehaviour
         inputActions = new PlayerControls();
     }
 
+    // Quando este script e ativado, comecamos a escutar os comandos.
     void OnEnable()
     {
         inputActions.Enable();
 
+        // Pressionar = StartInput; soltar = ReleaseInput.
         inputActions.PlayerMaps.Jump.started += StartInput;
         inputActions.PlayerMaps.Jump.canceled += ReleaseInput;
     }
@@ -93,8 +106,8 @@ public class Goblin : MonoBehaviour
         if (bc == null)
             bc = GetComponent<BoxCollider2D>();
         bc.enabled = true;
-        
-        if(spriteRenderer == null)
+
+        if (spriteRenderer == null)
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
         }
@@ -110,11 +123,12 @@ public class Goblin : MonoBehaviour
     }
 
 
+    // Update roda a cada quadro do jogo.
     void Update()
     {
         if (isDead)
         {
-            
+
             //if ((Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ||
             //    (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame))
             //{
@@ -125,10 +139,11 @@ public class Goblin : MonoBehaviour
 
         if (isDragging)
         {
+            // Enquanto arrastamos, atualizamos o mouse e redesenhamos a linha.
             dragEnd = GetTouchWorldPosition();
             DrawTrajectory();
         }
-        
+
         if (rb.linearVelocityY < -0.1f)
         {
             bool isFalling = !touchingSurface && rb.linearVelocity.y < -0.2f;
@@ -148,29 +163,37 @@ public class Goblin : MonoBehaviour
         }
     }
 
-    // START = começa drag sempre
+
+
+    // PASSO 1: O jogador aperta o mouse ou toca na tela.
     void StartInput(InputAction.CallbackContext context)
     {
+        // Se morreu ou acabou os pulos, nao pode lancar.
         if (isDead || jumpsRemaining <= 0)
             return;
 
+        // Descobrimos qual dispositivo o jogador esta usando (mouse ou toque).
         activePointer = context.control.device as Pointer;
 
         if (activePointer == null)
             return;
 
+        // Dizemos ao jogo: "o jogador esta arrastando".
         isDragging = true;
         startText.enabled = false;
         gameStarted = true;
 
+        // Guardamos o ponto inicial do arrasto.
         dragStart = GetTouchWorldPosition();
         dragEnd = dragStart;
 
+        // Mostra a previsao do caminho do goblin.
         lineRenderer.enabled = true;
 
         Debug.Log("Dispositivo: " + activePointer.displayName);
     }
 
+    // PASSO 2: O jogador solta o mouse ou tira o dedo da tela.
     void ReleaseInput(InputAction.CallbackContext context)
     {
         if (!isDragging)
@@ -184,41 +207,51 @@ public class Goblin : MonoBehaviour
             Vector2.Distance(dragStart, dragEnd)
         );
 
+        // Paramos de desenhar a linha e preparamos o lancamento.
         isDragging = false;
         lineRenderer.enabled = false;
 
+        // Executa o movimento do goblin.
         Launch();
 
         activePointer = null;
     }
 
+    // PASSO 3: Calculamos a direcao e a forca do lancamento.
     void Launch()
     {
 
         touchingSurface = false;
 
+        // Exemplo: puxou para baixo? O goblin vai na direcao contraria: para cima!
         Vector2 dragDirection = dragStart - dragEnd;
 
+        // Limita quanto a puxada pode influenciar na velocidade.
         dragDirection = Vector2.ClampMagnitude(dragDirection, maxDragDistance);
 
 
+        // Multiplicamos a direcao pela potencia do estilingue.
         Vector2 launchVelocity = dragDirection * launchPower;
-        
-        if(jumpsRemaining < 2)
+
+        // Se for o segundo pulo, o lancamento fica mais fraco.
+        if (jumpsRemaining < 2)
         {
-            launchVelocity = dragDirection * ((launchPower+2)/2);
+            launchVelocity = dragDirection * ((launchPower + 2) / 2);
         }
 
         UpdateSprite(launchVelocity.x);
 
+        // Esta linha faz o Rigidbody2D se mover de verdade.
         rb.linearVelocity = launchVelocity;
+        // Gastamos um dos pulos disponiveis.
         jumpsRemaining--;
 
-        
 
-        
+
+
     }
 
+    // PASSO 4: Desenhamos uma PREVISAO do trajeto antes de soltar.
     void DrawTrajectory()
     {
         Vector2 dragDirection = dragStart - dragEnd;
@@ -226,17 +259,19 @@ public class Goblin : MonoBehaviour
         dragDirection = Vector2.ClampMagnitude(dragDirection, maxDragDistance);
 
         Vector2 initialVelocity = dragDirection * launchPower;
-        
-        
-        if(jumpsRemaining < 2)
+
+
+        if (jumpsRemaining < 2)
         {
             initialVelocity = dragDirection * ((launchPower + 2) / 2);
         }
 
+        // Usamos a gravidade para prever a curva do salto.
         Vector2 gravity = Physics2D.gravity * rb.gravityScale;
 
         lineRenderer.positionCount = linePoints;
 
+        // Desenhamos a trajetoria ponto por ponto.
         for (int i = 0; i < linePoints; i++)
         {
             float time = i * timeBetweenPoints;
@@ -246,10 +281,12 @@ public class Goblin : MonoBehaviour
                 (initialVelocity * time) +
                 (0.5f * gravity * time * time);
 
+            // Coloca cada ponto na linha que aparece na tela.
             lineRenderer.SetPosition(i, point);
         }
     }
 
+    // AJUDA: transforma a posicao do mouse na tela em uma posicao do mundo.
     Vector2 GetTouchWorldPosition()
     {
         if (activePointer == null)
@@ -279,6 +316,12 @@ public class Goblin : MonoBehaviour
         );
     }
 
+ 
+
+
+
+    // Vira o sprite, cuida das paredes, colisoes, revive e game over.
+    // Tudo abaixo continua igual ao seu script original.
     void UpdateSprite(float xVelocity)
     {
         if (xVelocity > 0.1f)
@@ -292,7 +335,7 @@ public class Goblin : MonoBehaviour
         if (wall == null) return;
 
         float dir = wall.position.x - transform.position.x;
-    
+
         spriteRenderer.flipX = dir < 0f;
     }
 
@@ -334,7 +377,7 @@ public class Goblin : MonoBehaviour
         lastSafeWallPosition = safePosition;
         hasSafeWallPosition = true;
 
-        Debug.Log("Posição segura salva: " + lastSafeWallPosition);
+        //Debug.Log("Posição segura salva: " + lastSafeWallPosition);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -513,7 +556,7 @@ public class Goblin : MonoBehaviour
 
     public void RestartGame()
     {
-   
+
         gameoverPanel.SetActive(false);
         gameoverText.enabled = false;
         continueText.enabled = false;
@@ -523,4 +566,6 @@ public class Goblin : MonoBehaviour
 
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+
+    
 }
